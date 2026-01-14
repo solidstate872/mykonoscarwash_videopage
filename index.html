@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Langebaan Nessie</title>
+<style>
+/* --- BASE --- */
+:root{
+  --accent:#26A6FF;
+  --accent-dark:#1e6bbf;
+  --bg:#fefefe;
+  --fg:#222;
+  --panel-bg:#fff;
+  --shadow:0 12px 30px rgba(0,0,0,.15);
+}
+html,body{margin:0;padding:0;width:100%;height:100%;font-family:'Segoe UI',system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;display:flex;justify-content:center;align-items:center;overflow:hidden;background:var(--bg);color:var(--fg);transition:background-color .25s,color .25s}
+
+/* --- LANDING TEXT --- */
+.welcome{position:absolute;bottom:calc(50% + 14px + 60px);left:50%;transform:translateX(-50%);width:90%;max-width:680px;font-size:clamp(0.75rem,2.2vw,1.6rem);z-index:30;cursor:pointer;line-height:1.3;padding:0 16px;box-sizing:border-box;text-align:center}
+.welcome .no-break{white-space:nowrap}
+
+@media (max-height:520px) and (orientation:landscape){.welcome{font-size:clamp(0.6rem,1.8vw,1rem);bottom:calc(50% + 14px + 40px);line-height:1.2}}
+@media (max-width:768px) and (orientation:portrait){.welcome{font-size:clamp(0.7rem,3vw,1.4rem);bottom:calc(50% + 14px + 50px)}}
+@media (max-width:480px){.welcome{font-size:clamp(0.65rem,3.2vw,1.25rem);bottom:calc(50% + 14px + 45px);width:95%;padding:0 12px}}
+
+/* --- FULL WIDTH BAR --- */
+.bar{position:absolute;top:50%;left:0;width:100%;height:14px;background:#222;cursor:pointer;z-index:28;transition:background .25s}
+body.bar-hovered{background:#222;color:#fff}
+body.bar-hovered .bar{background:#fff}
+
+/* --- PLAY BUTTON --- */
+#playButton{position:absolute;top:calc(50% + 30px);left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;font-weight:700;font-size:1.1rem;padding:14px 44px;border:0;border-radius:12px;cursor:pointer;z-index:30;box-shadow:0 6px 20px rgba(0,0,0,.22);transition:transform .18s,box-shadow .18s}
+#playButton:hover{transform:translateX(-50%) scale(1.04);box-shadow:0 8px 28px rgba(0,0,0,.28)}
+
+/* --- VIDEO --- */
+#videoContainer{position:absolute;top:0;left:0;width:100%;height:100%;display:none}
+#videoPlayer{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;z-index:8;transition:filter .3s,opacity .4s}
+.grid-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;background-image:linear-gradient(to right,rgba(0,0,0,.12) 1px,transparent 1px),linear-gradient(to bottom,rgba(0,0,0,.12) 1px,transparent 1px);background-size:6px 6px;z-index:9}
+#videoBuffered,#videoProgress{position:absolute;bottom:0;left:0;height:4px;transition:width .2s linear;z-index:26}
+#videoBuffered{background:#ddd;z-index:24}
+#videoProgress{background:var(--accent)}
+
+/* --- QR BOX --- */
+.qr-box{position:fixed;bottom:20px;right:20px;width:110px;height:110px;background:var(--panel-bg);display:flex;justify-content:center;align-items:center;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.45);cursor:pointer;font-weight:700;font-size:.85rem;color:var(--fg);z-index:40;transition:transform .12s,opacity .12s}
+.qr-box.disabled{pointer-events:none;opacity:.5}
+.qr-box:hover:not(.disabled){transform:scale(1.04)}
+
+/* --- INFO PANEL (RESPONSIVE WITH COLLAPSIBLE MENU) --- */
+body.info-open:not(.hide-ui) #videoPlayer{filter:blur(6px) brightness(.72)}
+#infoOverlayLarge{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.98);width:92%;max-width:760px;height:80%;max-height:90vh;background:var(--panel-bg);color:var(--fg);display:none;flex-direction:row;z-index:60;border-radius:14px;padding:20px;overflow:hidden;box-shadow:var(--shadow);transition:opacity .32s,transform .38s;opacity:0}
+#infoOverlayLarge.open{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+#closeInfoOverlay{position:absolute;top:12px;right:12px;width:30px;height:30px;background:#e6e6e6;border:0;border-radius:6px;display:flex;justify-content:center;align-items:center;cursor:pointer;z-index:61;transition:all .2s}
+#closeInfoOverlay::before,#closeInfoOverlay::after{content:'';position:absolute;width:2px;height:16px;background:#222;transition:background .2s}
+#closeInfoOverlay::before{transform:rotate(45deg)}
+#closeInfoOverlay::after{transform:rotate(-45deg)}
+#closeInfoOverlay:hover{background:var(--accent);transform:rotate(90deg)}
+#closeInfoOverlay:hover::before,#closeInfoOverlay:hover::after{background:#fff}
+
+/* Vertical Tabs - Desktop */
+#infoVerticalTabs{display:flex;flex-direction:column;width:145px;gap:8px;margin-right:16px;flex-shrink:0}
+#infoVerticalTabs button{padding:12px 10px;border-radius:10px;border:0;background:rgba(38,166,255,0.12);font-weight:700;cursor:pointer;transition:all .25s;text-align:left;color:var(--fg);position:relative;overflow:hidden}
+#infoVerticalTabs button::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:rgba(255,255,255,0.14);transition:left .28s}
+#infoVerticalTabs button:hover::before{left:0}
+#infoVerticalTabs button.active,#infoVerticalTabs button:hover{background:var(--accent);color:#fff;transform:translateX(6px);box-shadow:0 6px 18px rgba(38,166,255,0.12)}
+
+/* Mobile Menu Toggle */
+#mobileMenuToggle{display:none;position:absolute;top:12px;left:12px;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:700;font-size:.9rem;cursor:pointer;z-index:62;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .2s}
+#mobileMenuToggle:active{transform:scale(0.95)}
+#mobileMenuToggle::after{content:' ☰';margin-left:4px}
+#mobileMenuToggle.open::after{content:' ✕'}
+
+#infoContent{flex:1;display:flex;overflow:hidden;border-left:1px solid rgba(0,0,0,.06);position:relative}
+.tabContent{display:none;flex:1;overflow-y:auto;padding:12px 18px;opacity:0;transform:translateX(18px);transition:opacity .28s,transform .28s}
+.tabContent.active{display:block;opacity:1;transform:translateX(0)}
+.tabContent::-webkit-scrollbar{width:8px}
+.tabContent::-webkit-scrollbar-track{background:rgba(0,0,0,0.04);border-radius:4px}
+.tabContent::-webkit-scrollbar-thumb{background-color:var(--accent);border-radius:4px}
+
+/* --- MOBILE RESPONSIVE INFO PANEL --- */
+@media (max-width: 768px) {
+  #infoOverlayLarge{
+    width:96%;
+    height:85%;
+    padding:16px;
+    flex-direction:column;
+  }
+  
+  #mobileMenuToggle{
+    display:block;
+  }
+  
+  #infoVerticalTabs{
+    position:absolute;
+    top:50px;
+    left:12px;
+    width:auto;
+    min-width:140px;
+    background:var(--panel-bg);
+    border-radius:10px;
+    padding:8px;
+    box-shadow:0 8px 24px rgba(0,0,0,.2);
+    z-index:63;
+    transform:translateX(-200%);
+    transition:transform .3s ease-in-out;
+  }
+  
+  #infoVerticalTabs.mobile-open{
+    transform:translateX(0);
+  }
+  
+  #infoVerticalTabs button{
+    width:100%;
+    transform:translateX(0) !important;
+  }
+  
+  #infoVerticalTabs button.active{
+    transform:translateX(0) !important;
+  }
+  
+  #infoContent{
+    border-left:none;
+    border-top:1px solid rgba(0,0,0,.06);
+    margin-top:0;
+  }
+  
+  .tabContent{
+    padding:8px 12px;
+  }
+  
+  /* Responsive pricing table */
+  #bookings table{
+    font-size:.9rem;
+  }
+  #bookings thead th{
+    padding:12px 12px !important;
+    font-size:.9rem !important;
+  }
+  #bookings tbody td{
+    padding:12px 12px !important;
+    font-size:.88rem !important;
+  }
+  #bookings tbody td:first-child{
+    font-size:.95rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #infoOverlayLarge{
+    width:98%;
+    height:90%;
+    padding:12px;
+    border-radius:10px;
+  }
+  
+  #closeInfoOverlay{
+    width:28px;
+    height:28px;
+    top:8px;
+    right:8px;
+  }
+  
+  #mobileMenuToggle{
+    top:8px;
+    left:8px;
+    padding:6px 12px;
+    font-size:.85rem;
+  }
+  
+  #infoVerticalTabs{
+    top:45px;
+    left:8px;
+    min-width:120px;
+    padding:6px;
+  }
+  
+  #infoVerticalTabs button{
+    padding:10px 8px;
+    font-size:.9rem;
+  }
+  
+  .qr-box{
+    width:88px;
+    height:88px;
+    bottom:12px;
+    right:12px;
+  }
+}
+
+/* --- SETTINGS (moved to bottom-left) --- */
+#settingsWrapper{position:fixed;bottom:12px;left:12px;z-index:100;display:flex;flex-direction:column;align-items:flex-start}
+#settingsBtn{font-size:.95rem;cursor:pointer;color:#fff;background:var(--accent);border:0;border-radius:10px;padding:8px 12px;box-shadow:0 8px 18px rgba(0,0,0,.18);transition:transform .12s}
+#settingsBtn:hover{transform:scale(1.03)}
+#settingsPanel{display:none;flex-direction:column;background:var(--panel-bg);color:var(--fg);border-radius:12px;padding:14px 18px;box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:.92rem;gap:12px;min-width:200px;margin-bottom:8px}
+.settingItem{display:flex;justify-content:space-between;align-items:center}
+#volumeControl{width:92px}
+
+/* --- SWITCH --- */
+.switch{position:relative;display:inline-block;width:48px;height:26px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.12);border-radius:34px;transition:.28s}
+.slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.28s}
+input:checked + .slider{background:rgba(38,166,255,.85)}
+input:checked + .slider:before{transform:translateX(22px)}
+
+/* --- DARK MODE --- */
+body.dark-mode{background:#000;color:#fff}
+body.dark-mode .bar{background:#fff}
+body.dark-mode #videoBuffered{background:#fff}
+body.dark-mode #videoProgress{background:var(--accent)}
+body.dark-mode .qr-box{background:#111;color:#fff}
+body.dark-mode #infoOverlayLarge{background:#111;color:#fff}
+body.dark-mode #settingsPanel{background:#111;color:#fff}
+body.dark-mode #infoVerticalTabs{background:#111}
+body.dark-mode #closeInfoOverlay{background:#333}
+body.dark-mode #closeInfoOverlay::before,body.dark-mode #closeInfoOverlay::after{background:#fff}
+body.dark-mode #closeInfoOverlay:hover{background:var(--accent)}
+
+/* --- QR MODAL + OVERLAY --- */
+#qrModalOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.28);backdrop-filter:blur(3px);z-index:70;opacity:0;transition:opacity .18s}
+#qrModal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.98);background:var(--panel-bg);color:var(--fg);padding:18px 20px;border-radius:12px;box-shadow:0 12px 36px rgba(0,0,0,.36);z-index:71;text-align:center;width:320px;opacity:0;transition:opacity .18s,transform .18s}
+#qrModal.open{display:block;opacity:1;transform:translate(-50%,-50%) scale(1)}
+#qrModalOverlay.open{display:block;opacity:1}
+.modalBtn{padding:8px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
+.modalProceed{background:var(--accent);color:#fff}
+.modalCancel{background:#ddd;color:#222}
+
+/* --- FOOTER --- */
+#buildNo{position:fixed;top:12px;left:12px;font-size:.85rem;color:#555;z-index:30}
+#copyright{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);font-size:.85rem;color:#555;z-index:30}
+
+/* small responsive tweaks */
+@media (max-width:520px){
+  #settingsPanel{min-width:170px;padding:12px}
+  #buildNo{font-size:.75rem;top:8px;left:8px}
+  #copyright{font-size:.75rem;bottom:8px}
+}
+</style>
+</head>
+<body>
+
+<!-- LANDING TEXT -->
+<div class="welcome" id="welcome"></div>
+
+<!-- START BAR -->
+<div class="bar" id="startBar" aria-hidden="true"></div>
+
+<!-- PLAY BUTTON -->
+<button id="playButton" aria-label="Play video">Play</button>
+
+<!-- QR TIP (landing) -->
+<div id="qrTip" class="qr-box" role="button" aria-label="Scan QR code or click to open website" tabindex="0" title="Scan / Click to open site"></div>
+
+<!-- VIDEO -->
+<div id="videoContainer">
+    <video id="videoPlayer" loop playsinline preload="metadata" poster="" tabindex="0" aria-label="Background video">
+        <source id="videoSource" src="" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="grid-overlay" aria-hidden="true"></div>
+    <div id="videoBuffered" aria-hidden="true"></div>
+    <div id="videoProgress" aria-hidden="true"></div>
+    <div id="qrBtn" class="qr-box disabled" title="Open info">Info</div>
+</div>
+
+<!-- INFO PANEL -->
+<div id="infoOverlayLarge" role="dialog" aria-modal="true" aria-hidden="true">
+    <button id="closeInfoOverlay" aria-label="Close info"></button>
+    
+    <!-- Mobile Menu Toggle -->
+    <button id="mobileMenuToggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+
+    <!-- Vertical Tabs -->
+    <div id="infoVerticalTabs" role="tablist" aria-orientation="vertical"></div>
+
+    <!-- Content Area -->
+    <div id="infoContent"></div>
+</div>
+
+<!-- QR Modal overlay + popup -->
+<div id="qrModalOverlay" aria-hidden="true"></div>
+<div id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle" aria-describedby="qrModalDesc">
+    <h2 id="qrModalTitle" style="font-size:1.1rem;margin:0 0 8px">Visit Website</h2>
+    <p id="qrModalDesc" style="margin:0 0 14px;font-size:.95rem;color:var(--fg)">You clicked the QR code!<br>Would you like to visit our main business site?</p>
+    <div style="display:flex;justify-content:center;gap:12px">
+        <button id="qrProceedBtn" class="modalBtn modalProceed" type="button">Proceed</button>
+        <button id="qrCancelBtn" class="modalBtn modalCancel" type="button">Cancel</button>
+    </div>
+</div>
+
+<!-- SETTINGS (bottom-left) -->
+<div id="settingsWrapper">
+    <div id="settingsPanel" aria-hidden="true">
+        <div class="settingItem"><label for="visualModeToggle">Visual Mode</label><label class="switch"><input type="checkbox" id="visualModeToggle" aria-label="Toggle dark mode"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="fullscreenModeToggle">Fullscreen</label><label class="switch"><input type="checkbox" id="fullscreenModeToggle" aria-label="Toggle fullscreen"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="pauseVideoToggle">Pause Video</label><label class="switch"><input type="checkbox" id="pauseVideoToggle" aria-label="Pause or play video"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="muteAudioToggle">Mute Audio</label><label class="switch"><input type="checkbox" id="muteAudioToggle" aria-label="Mute or unmute audio"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="volumeControl">Volume</label><input id="volumeControl" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Adjust volume"></div>
+        <div class="settingItem"><label for="hideUIToggle">Hide UI</label><label class="switch"><input type="checkbox" id="hideUIToggle" aria-label="Hide user interface"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="refreshPageToggle">Reset Landing</label><label class="switch"><input type="checkbox" id="refreshPageToggle" aria-label="Reset to landing page"><span class="slider" aria-hidden="true"></span></label></div>
+    </div>
+
+    <button id="settingsBtn" aria-expanded="false" aria-controls="settingsPanel" title="Settings">Settings</button>
+</div>
+
+<!-- FOOTER -->
+<div id="buildNo">Build No. 0.2.1</div>
+<div id="copyright">© 2026 · All rights reserved</div>
+
+<!-- Config -->
+<script src="config.js"></script>
+<!-- QR library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+// ----------------- ELEMENTS -----------------
+const startBar = document.getElementById('startBar');
+const videoContainer = document.getElementById('videoContainer');
+const video = document.getElementById('videoPlayer');
+const videoSource = document.getElementById('videoSource');
+const videoProgress = document.getElementById('videoProgress');
+const videoBuffered = document.getElementById('videoBuffered');
+const qrBtn = document.getElementById('qrBtn');
+const qrTip = document.getElementById('qrTip');
+const infoOverlayLarge = document.getElementById('infoOverlayLarge');
+const closeInfoOverlay = document.getElementById('closeInfoOverlay');
+const infoVerticalTabs = document.getElementById('infoVerticalTabs');
+const infoContent = document.getElementById('infoContent');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const visualModeToggle = document.getElementById('visualModeToggle');
+const fullscreenModeToggle = document.getElementById('fullscreenModeToggle');
+const pauseVideoToggle = document.getElementById('pauseVideoToggle');
+const muteAudioToggle = document.getElementById('muteAudioToggle');
+const volumeControl = document.getElementById('volumeControl');
+const refreshPageToggle = document.getElementById('refreshPageToggle');
+const hideUIToggle = document.getElementById('hideUIToggle');
+const playButton = document.getElementById('playButton');
+const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+
+const qrModal = document.getElementById('qrModal');
+const qrModalOverlay = document.getElementById('qrModalOverlay');
+const qrProceedBtn = document.getElementById('qrProceedBtn');
+const qrCancelBtn = document.getElementById('qrCancelBtn');
+const buildNo = document.getElementById('buildNo');
+const copyrightEl = document.getElementById('copyright');
+
+// --- CONFIG LOADING ---
+const DEFAULT_CONFIG = {
+  landing: { propertyName: 'Property Name', brand: 'theVideopage', brandSuffix: 'TM' },
+  video: { src: '', poster: '' },
+  qr: { url: '' },
+  infoButtonLabel: 'Info',
+  buildNumber: '',
+  copyright: '',
+  tabs: []
+};
+const CONFIG = Object.assign({}, DEFAULT_CONFIG, window.SITE_CONFIG || {});
+
+// set default volume
+video.volume = 0.5;
+volumeControl.value = 0.5;
+
+// init landing and dynamic content
+function renderLanding(){
+  const brandPart = CONFIG.landing.brand ? `${CONFIG.landing.brand}<sup>${CONFIG.landing.brandSuffix || ''}</sup>` : '';
+  document.getElementById('welcome').innerHTML = `Welcome to <span style="color:var(--accent)">${brandPart}</span> of "<span class="no-break">${CONFIG.landing.propertyName}</span>"`;
+}
+
+function renderVideo(){
+  if(CONFIG.video.poster) video.setAttribute('poster', CONFIG.video.poster);
+  if(CONFIG.video.src){
+    videoSource.src = CONFIG.video.src;
+    video.load();
+  }
+}
+
+function renderFooter(){
+  if(CONFIG.buildNumber) buildNo.textContent = `Build No. ${CONFIG.buildNumber}`;
+  if(CONFIG.copyright) copyrightEl.textContent = CONFIG.copyright;
+}
+
+function renderTabs(){
+  infoVerticalTabs.innerHTML = '';
+  infoContent.innerHTML = '';
+  CONFIG.tabs.forEach((tab, index)=>{
+    const btn = document.createElement('button');
+    btn.className = 'tabBtn' + (index === 0 ? ' active' : '');
+    btn.dataset.tab = tab.id;
+    btn.role = 'tab';
+    btn.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+    btn.textContent = tab.label;
+    infoVerticalTabs.appendChild(btn);
+
+    const panel = document.createElement('div');
+    panel.className = 'tabContent' + (index === 0 ? ' active' : '');
+    panel.id = tab.id;
+    panel.role = 'tabpanel';
+    if(index !== 0) panel.style.display = 'none';
+    panel.innerHTML = tab.contentHtml || '';
+    infoContent.appendChild(panel);
+  });
+}
+
+function applyDynamicContent(){
+  renderLanding();
+  renderVideo();
+  renderFooter();
+  renderTabs();
+  qrBtn.textContent = CONFIG.infoButtonLabel || 'Info';
+}
+
+applyDynamicContent();
+
+// init QR code for landing tip
+try {
+  if(typeof QRCode !== 'undefined') {
+    new QRCode(qrTip, { text: CONFIG.qr.url || '', width:85, height:85 });
+  } else {
+    // Fallback: show text if QR library fails
+    qrTip.innerHTML = '<div style="font-size:0.7rem;text-align:center;padding:10px">QR<br>Code</div>';
+  }
+} catch(e) {
+  console.error('QR Code generation failed:', e);
+  qrTip.innerHTML = '<div style="font-size:0.7rem;text-align:center;padding:10px">QR<br>Code</div>';
+}
+
+// disable info on landing until video started
+qrBtn.classList.add('disabled');
+
+// ----------------- HELPERS -----------------
+function startExperience(){
+  if(videoContainer.style.display !== 'block'){
+    videoContainer.style.display = 'block';
+    video.play().catch(()=>{});
+    document.getElementById('welcome').style.display = 'none';
+    startBar.style.display = 'none';
+    playButton.style.display = 'none';
+    qrTip.style.display = 'none';
+    qrBtn.classList.remove('disabled');
+  }
+}
+
+function openInfoPanel(){
+  infoOverlayLarge.style.display = 'flex';
+  setTimeout(()=> infoOverlayLarge.classList.add('open'), 10);
+  if(!document.body.classList.contains('hide-ui')) document.body.classList.add('info-open');
+  infoOverlayLarge.setAttribute('aria-hidden', 'false');
+}
+
+function closeInfoPanel(){
+  infoOverlayLarge.classList.remove('open');
+  infoVerticalTabs.classList.remove('mobile-open');
+  mobileMenuToggle.classList.remove('open');
+  mobileMenuToggle.setAttribute('aria-expanded', 'false');
+  setTimeout(()=>{ 
+    infoOverlayLarge.style.display='none'; 
+    document.body.classList.remove('info-open'); 
+    infoOverlayLarge.setAttribute('aria-hidden','true'); 
+  }, 360);
+}
+
+function openQrModal(){
+  qrModal.classList.add('open'); qrModalOverlay.classList.add('open');
+  qrModal.style.display='block'; qrModalOverlay.style.display='block';
+  qrProceedBtn.focus();
+}
+function closeQrModal(){ 
+  qrModal.classList.remove('open'); 
+  qrModalOverlay.classList.remove('open'); 
+  setTimeout(()=>{ 
+    qrModal.style.display='none'; 
+    qrModalOverlay.style.display='none'; 
+  },180); 
+}
+function closeQrModalImmediate(){ 
+  qrModal.classList.remove('open'); 
+  qrModalOverlay.classList.remove('open'); 
+  qrModal.style.display='none'; 
+  qrModalOverlay.style.display='none'; 
+}
+
+// ----------------- MOBILE MENU TOGGLE -----------------
+mobileMenuToggle.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const isOpen = infoVerticalTabs.classList.contains('mobile-open');
+  if(isOpen){
+    infoVerticalTabs.classList.remove('mobile-open');
+    mobileMenuToggle.classList.remove('open');
+    mobileMenuToggle.setAttribute('aria-expanded', 'false');
+  } else {
+    infoVerticalTabs.classList.add('mobile-open');
+    mobileMenuToggle.classList.add('open');
+    mobileMenuToggle.setAttribute('aria-expanded', 'true');
+  }
+});
+
+// Close mobile menu when clicking outside
+document.addEventListener('click', (e)=>{
+  if(window.innerWidth <= 768){
+    if(!infoVerticalTabs.contains(e.target) && 
+       !mobileMenuToggle.contains(e.target) &&
+       infoVerticalTabs.classList.contains('mobile-open')){
+      infoVerticalTabs.classList.remove('mobile-open');
+      mobileMenuToggle.classList.remove('open');
+      mobileMenuToggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+});
+
+// Close mobile menu when tab is selected
+function attachTabHandlers(){
+  const infoTabs = infoVerticalTabs.querySelectorAll('.tabBtn');
+  const tabContents = infoContent.querySelectorAll('.tabContent');
+  infoTabs.forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      infoTabs.forEach(t=>{ t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+      tabContents.forEach(c=>{ c.classList.remove('active'); c.style.display='none'; });
+      tab.classList.add('active'); tab.setAttribute('aria-selected','true');
+      const target = document.getElementById(tab.dataset.tab);
+      target.style.display='block'; void target.offsetWidth; target.classList.add('active');
+      
+      if(window.innerWidth <= 768){
+        infoVerticalTabs.classList.remove('mobile-open');
+        mobileMenuToggle.classList.remove('open');
+        mobileMenuToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+}
+attachTabHandlers();
+
+// ----------------- EVENTS -----------------
+[startBar, playButton].forEach(el => el.addEventListener('click', startExperience));
+
+// bar hover
+startBar.addEventListener('mouseenter', ()=> document.body.classList.add('bar-hovered'));
+startBar.addEventListener('mouseleave', ()=> document.body.classList.remove('bar-hovered'));
+
+// QR tip -> modal
+qrTip.addEventListener('click', ()=>{ if(hideUIToggle.checked) return; openQrModal(); });
+qrTip.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); if(!hideUIToggle.checked) openQrModal(); }});
+qrCancelBtn.addEventListener('click', closeQrModal);
+qrModalOverlay.addEventListener('click', closeQrModal);
+qrProceedBtn.addEventListener('click', ()=>{ if(CONFIG.qr.url) window.open(CONFIG.qr.url,'_blank','noopener,noreferrer'); closeQrModal(); });
+
+// info button
+qrBtn.addEventListener('click', ()=>{ if(!qrBtn.classList.contains('disabled')){ closeQrModalImmediate(); openInfoPanel(); }});
+closeInfoOverlay.addEventListener('click', closeInfoPanel);
+
+// settings toggle
+settingsBtn.addEventListener('click', ()=>{
+  const isOpen = settingsPanel.style.display === 'flex';
+  settingsPanel.style.display = isOpen ? 'none' : 'flex';
+  settingsBtn.setAttribute('aria-expanded', String(!isOpen));
+});
+
+// auto-close settings when clicking outside
+document.addEventListener('click', (e)=>{
+  if(!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)){
+    if(settingsPanel.style.display === 'flex'){
+      settingsPanel.style.display = 'none';
+      settingsBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+});
+
+// visual mode
+visualModeToggle.addEventListener('change', ()=> document.body.classList.toggle('dark-mode'));
+
+// fullscreen
+fullscreenModeToggle.addEventListener('change', ()=>{
+  if(fullscreenModeToggle.checked){ 
+    const elem = document.documentElement;
+    if(elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
+    else if(elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(()=>{});
+    else if(elem.mozRequestFullScreen) elem.mozRequestFullScreen().catch(()=>{});
+    else if(elem.msRequestFullscreen) elem.msRequestFullscreen().catch(()=>{});
+  } else { 
+    if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+    else if(document.webkitExitFullscreen) document.webkitExitFullscreen().catch(()=>{});
+    else if(document.mozCancelFullScreen) document.mozCancelFullScreen().catch(()=>{});
+    else if(document.msExitFullscreen) document.msExitFullscreen().catch(()=>{});
+  }
+});
+
+// pause toggle
+pauseVideoToggle.addEventListener('change', ()=>{ if(pauseVideoToggle.checked) video.pause(); else video.play().catch(()=>{}); });
+
+// mute
+muteAudioToggle.addEventListener('change', ()=> video.muted = muteAudioToggle.checked );
+
+// volume
+volumeControl.addEventListener('input', ()=> video.volume = volumeControl.value );
+
+// video progress & buffered
+video.addEventListener('timeupdate', ()=>{ if(video.duration) videoProgress.style.width = (video.currentTime / video.duration * 100) + '%'; });
+video.addEventListener('progress', ()=>{
+  if(video.buffered.length){ 
+    const bufferedEnd = video.buffered.end(video.buffered.length - 1); 
+    const duration = video.duration || 1; 
+    if(duration>0) videoBuffered.style.width = (bufferedEnd / duration * 100) + '%'; 
+  }
+});
+
+// refresh landing
+refreshPageToggle.addEventListener('change', ()=>{ if(refreshPageToggle.checked) location.reload(); });
+
+// hide UI behavior
+hideUIToggle.addEventListener('change', ()=>{
+  if(hideUIToggle.checked){
+    document.body.classList.add('hide-ui');
+    playButton.style.display='none'; qrTip.style.display='none'; qrBtn.style.display='none'; qrBtn.classList.add('disabled');
+    closeQrModalImmediate(); closeInfoPanel();
+    if(videoContainer.style.display !== 'block') startBar.style.display = 'block';
+  } else {
+    document.body.classList.remove('hide-ui');
+    if(videoContainer.style.display !== 'block'){
+      playButton.style.display='block'; startBar.style.display='block'; qrTip.style.display='flex'; qrBtn.classList.add('disabled');
+    } else {
+      qrBtn.style.display='flex'; qrBtn.classList.remove('disabled');
+      if(infoOverlayLarge.style.display==='flex'){ infoOverlayLarge.classList.add('open'); document.body.classList.add('info-open'); }
+    }
+  }
+});
+
+// QR/modal keyboard handling
+window.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    if(qrModal.style.display === 'block'){ closeQrModal(); }
+    else if(infoOverlayLarge.style.display === 'flex'){ closeInfoPanel(); }
+  }
+});
+
+
+// tap/click to pause/play when video visible
+function togglePlayPause(){ 
+  if(video.paused){ 
+    video.play().catch(()=>{}); 
+    pauseVideoToggle.checked = false; 
+  } else { 
+    video.pause(); 
+    pauseVideoToggle.checked = true; 
+  } 
+}
+video.addEventListener('pointerup', ()=>{ if(videoContainer.style.display === 'block') togglePlayPause(); });
+
+// Video error handling
+video.addEventListener('error', (e)=>{
+  console.error('Video failed to load:', e);
+  alert('Video failed to load. Please refresh the page or check your connection.');
+});
+
+}); // End of DOMContentLoaded
+
+</script>
+</body>
+</html>
