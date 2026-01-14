@@ -1,0 +1,34 @@
+{
+  "@context": "https://schema.org",
+  "@type": "CarWash",
+  "name": "Club Mykonos Car Wash",
+  "image": "https://www.facebook.com/photo/?fbid=507829661344761&set=a.507829634678097",
+  "telephone": "+27 82 821 5458",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Club Mykonos Resort",
+    "addressLocality": "Langebaan",
+    "addressRegion": "Western Cape",
+    "postalCode": "7357",
+    "addressCountry": "ZA"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": -33.049036,
+    "longitude": 18.042419
+  },
+  "openingHours": [
+    "Mo-Fr 09:00-17:00",
+    "Sa 09:00-15:00",
+    "Su 09:00-14:00"
+  ],
+  "description": "Mykonos Car Wash provides exterior cleaning, interior cleaning, detailing, auto detailing, and hand wash services in Langebaan, Western Cape.",
+  "keywords": [
+    "car wash Langebaan",
+    "auto detailing",
+    "hand wash",
+    "interior cleaning",
+    "exterior cleaning"
+  ],
+  "url": "https://solidstate872.github.io/mykonoscarwash_videopage/"
+}
