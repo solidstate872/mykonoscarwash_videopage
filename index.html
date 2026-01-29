@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Langebaan Nessie</title>
+<!-- Structured Data for Google -->
+  <script type="application/ld+json" src="structured-data.json"></script>
+<style>
+/* --- BASE --- */
+:root{
+  --accent:#26A6FF;
+  --accent-dark:#1e6bbf;
+  --bg:#fafafa;
+  --fg:#1a1a1a;
+  --panel-bg:#ffffff;
+  --border:rgba(0,0,0,.06);
+  --shadow:0 2px 8px rgba(0,0,0,.04);
+  --shadow-hover:0 4px 16px rgba(0,0,0,.08);
+}
+html,body{margin:0;padding:0;width:100%;height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;display:flex;justify-content:center;align-items:center;overflow:hidden;background:var(--bg);color:var(--fg);transition:background-color .3s,color .3s;letter-spacing:-.01em}
+
+/* --- LANDING TEXT --- */
+.welcome{position:absolute;bottom:calc(50% + 14px + 60px);left:50%;transform:translateX(-50%);width:90%;max-width:680px;font-size:clamp(0.75rem,2.2vw,1.6rem);z-index:30;cursor:pointer;line-height:1.4;padding:0 16px;box-sizing:border-box;text-align:center;font-weight:300}
+.welcome .no-break{white-space:nowrap}
+
+@media (max-height:520px) and (orientation:landscape){.welcome{font-size:clamp(0.6rem,1.8vw,1rem);bottom:calc(50% + 14px + 40px);line-height:1.2}}
+@media (max-width:768px) and (orientation:portrait){.welcome{font-size:clamp(0.7rem,3vw,1.4rem);bottom:calc(50% + 14px + 50px)}}
+@media (max-width:480px){.welcome{font-size:clamp(0.65rem,3.2vw,1.25rem);bottom:calc(50% + 14px + 45px);width:95%;padding:0 12px}}
+
+/* --- FULL WIDTH BAR WITH PROGRESS INSIDE --- */
+.bar{
+  position:absolute;
+  top:50%;
+  left:0;
+  width:100%;
+  height:14px;
+  background:black;
+  transform:translateY(-50%);
+  cursor:pointer;
+  z-index:28;
+  transition:.3s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+/* Progress text INSIDE the bar */
+#progress{
+  font-family:monospace;
+  white-space:pre;
+  font-size:12px;
+  color:white;
+  pointer-events:none;
+  user-select:none;
+  position:relative;
+  z-index:1;
+}
+
+/* LIGHT MODE: Default (black bar, white text) */
+body:not(.dark-mode) .bar{background:black}
+body:not(.dark-mode) #progress{color:white}
+
+/* LIGHT MODE: Hover invert (white bar, black text) */
+body:not(.dark-mode).invert{background:black;color:white}
+body:not(.dark-mode).invert .bar{background:white}
+body:not(.dark-mode).invert #progress{color:black}
+
+/* DARK MODE: Default (white bar, black text) */
+body.dark-mode .bar{background:white}
+body.dark-mode #progress{color:black}
+
+/* DARK MODE: Hover invert (black bar, white text) */
+body.dark-mode.invert{background:white;color:black}
+body.dark-mode.invert .bar{background:black}
+body.dark-mode.invert #progress{color:white}
+
+/* --- VIDEO --- */
+#videoContainer{position:absolute;top:0;left:0;width:100%;height:100%;display:none}
+#videoPlayer{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;z-index:8;transition:filter .3s,opacity .4s}
+.grid-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;background-image:linear-gradient(to right,rgba(0,0,0,.12) 1px,transparent 1px),linear-gradient(to bottom,rgba(0,0,0,.12) 1px,transparent 1px);background-size:6px 6px;z-index:9}
+#videoBuffered,#videoProgress{position:absolute;bottom:0;left:0;height:4px;transition:width .2s linear;z-index:26}
+#videoBuffered{background:#ddd;z-index:24}
+#videoProgress{background:var(--accent)}
+
+/* --- QR BOX - MINIMALIST STYLE --- */
+.qr-box{position:fixed;bottom:20px;right:20px;width:110px;height:110px;background:var(--panel-bg);display:flex;justify-content:center;align-items:center;border-radius:8px;box-shadow:var(--shadow);cursor:pointer;font-weight:500;font-size:.85rem;color:var(--fg);z-index:40;transition:transform .2s,opacity .2s,box-shadow .2s,background .3s,color .3s;border:1px solid var(--border)}
+.qr-box.disabled{pointer-events:none;opacity:.5}
+.qr-box:hover:not(.disabled){transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+
+.qr-box .qrInner{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.qr-box .qrCanvas{display:flex;align-items:center;justify-content:center}
+.qr-box .qrLabel{position:absolute;left:0;right:0;text-align:center;font-weight:500;font-size:.85rem;color:var(--fg);pointer-events:none;line-height:1.1;opacity:1;transition:opacity .2s,color .3s}
+
+.qrSmallCanvas{width:74px;height:74px;display:flex;align-items:center;justify-content:center}
+.qrSmallLabel{position:absolute;left:0;right:0;text-align:center;font-weight:500;font-size:.9rem;color:var(--fg);pointer-events:none;line-height:1.1;transition:color .3s}
+
+/* --- PLAY-STYLE - MINIMALIST --- */
+#qrTip.play-style{
+  background:var(--accent);
+  color:#fff;
+  box-shadow:var(--shadow);
+  border-radius:8px;
+  border:none;
+  transition:transform .2s,box-shadow .2s;
+}
+#qrTip.play-style:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+#qrTip.play-style .qrCanvas{display:none}
+#qrTip.play-style .qrLabel{color:#fff;font-size:1rem;opacity:1;padding-left:8px;padding-right:8px;font-weight:500}
+
+/* --- INFO PANEL - SLEEK MINIMALIST --- */
+body.info-open:not(.hide-ui) #videoPlayer{filter:blur(6px) brightness(.72)}
+#infoOverlayLarge{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.98);width:92%;max-width:760px;height:80%;max-height:90vh;background:var(--panel-bg);color:var(--fg);display:none;flex-direction:row;z-index:60;border-radius:12px;padding:32px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.12);transition:opacity .3s,transform .3s,background .3s,color .3s;opacity:0;border:1px solid var(--border)}
+#infoOverlayLarge.open{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+#closeInfoOverlay{position:absolute;top:16px;right:16px;width:32px;height:32px;background:transparent;border:1px solid var(--border);border-radius:8px;display:flex;justify-content:center;align-items:center;cursor:pointer;z-index:61;transition:all .2s}
+#closeInfoOverlay::before,#closeInfoOverlay::after{content:'';position:absolute;width:2px;height:14px;background:var(--fg);transition:background .2s}
+#closeInfoOverlay::before{transform:rotate(45deg)}
+#closeInfoOverlay::after{transform:rotate(-45deg)}
+#closeInfoOverlay:hover{background:var(--fg);border-color:var(--fg)}
+#closeInfoOverlay:hover::before,#closeInfoOverlay:hover::after{background:var(--panel-bg)}
+
+/* Vertical Tabs - Minimalist */
+#infoVerticalTabs{display:flex;flex-direction:column;width:140px;gap:6px;margin-right:24px;flex-shrink:0}
+#infoVerticalTabs button{padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;font-weight:500;cursor:pointer;transition:all .2s;text-align:left;color:var(--fg);font-size:.9rem;letter-spacing:-.01em}
+#infoVerticalTabs button:hover{background:rgba(38,166,255,0.05);border-color:var(--accent)}
+#infoVerticalTabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Mobile Menu Toggle */
+#mobileMenuToggle{display:none;position:absolute;top:16px;left:16px;background:transparent;color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-weight:500;font-size:.85rem;cursor:pointer;z-index:62;transition:all .2s}
+#mobileMenuToggle:hover{background:rgba(38,166,255,0.05);border-color:var(--accent)}
+#mobileMenuToggle::after{content:' ☰';margin-left:4px}
+#mobileMenuToggle.open::after{content:' ✕'}
+
+#infoContent{flex:1;display:flex;overflow:hidden;border-left:1px solid var(--border);position:relative}
+.tabContent{display:none;flex:1;overflow-y:auto;padding:0 24px;opacity:0;transform:translateX(12px);transition:opacity .3s,transform .3s}
+.tabContent.active{display:block;opacity:1;transform:translateX(0)}
+.tabContent::-webkit-scrollbar{width:6px}
+.tabContent::-webkit-scrollbar-track{background:transparent}
+.tabContent::-webkit-scrollbar-thumb{background-color:rgba(0,0,0,.15);border-radius:3px}
+
+/* Minimalist content styling */
+.tabContent h2{font-size:1.5rem;font-weight:400;margin:0 0 24px;color:var(--fg);letter-spacing:-.02em}
+.tabContent p{line-height:1.6;font-size:.95rem;color:var(--fg);opacity:.85;font-weight:300}
+
+/* Clean card style */
+.content-card{background:var(--panel-bg);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:16px;transition:box-shadow .2s,border-color .2s}
+.content-card:hover{box-shadow:var(--shadow-hover);border-color:rgba(38,166,255,0.2)}
+
+/* Clean table */
+table{width:100%;border-collapse:collapse;background:var(--panel-bg);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+thead tr{background:rgba(38,166,255,0.04)}
+th{padding:14px 18px;text-align:left;font-weight:500;font-size:.9rem;color:var(--fg);border-bottom:1px solid var(--border)}
+td{padding:14px 18px;font-size:.9rem;border-bottom:1px solid var(--border)}
+tbody tr:last-child td{border-bottom:none}
+
+/* --- MOBILE RESPONSIVE INFO PANEL --- */
+@media (max-width: 768px) {
+  #infoOverlayLarge{width:96%;height:85%;padding:20px;flex-direction:column}
+  #mobileMenuToggle{display:block}
+  #infoVerticalTabs{position:absolute;top:60px;left:16px;width:auto;min-width:130px;background:var(--panel-bg);border-radius:8px;padding:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:63;transform:translateX(-200%);transition:transform .3s ease-in-out;border:1px solid var(--border)}
+  #infoVerticalTabs.mobile-open{transform:translateX(0)}
+  #infoContent{border-left:none;border-top:1px solid var(--border);margin-top:0;padding-top:16px}
+  .tabContent{padding:0 16px}
+  
+  /* Responsive pricing table */
+  table{font-size:.9rem}
+  thead th{padding:12px 12px !important;font-size:.9rem !important}
+  tbody td{padding:12px 12px !important;font-size:.88rem !important}
+  tbody td:first-child{font-size:.95rem !important}
+}
+
+@media (max-width: 480px) {
+  #infoOverlayLarge{width:98%;height:90%;padding:12px;border-radius:10px}
+  #closeInfoOverlay{width:28px;height:28px;top:8px;right:8px}
+  #mobileMenuToggle{top:8px;left:8px;padding:6px 12px;font-size:.85rem}
+  #infoVerticalTabs{top:45px;left:8px;min-width:120px;padding:6px}
+  #infoVerticalTabs button{padding:10px 8px;font-size:.9rem}
+  .qr-box{width:88px;height:88px;bottom:12px;right:12px}
+}
+
+/* --- SETTINGS - MINIMALIST --- */
+#settingsWrapper{position:fixed;bottom:12px;left:12px;z-index:100;display:flex;flex-direction:column;align-items:flex-start}
+#settingsBtn{font-size:.9rem;cursor:pointer;color:var(--fg);background:var(--panel-bg);border:1px solid var(--border);border-radius:8px;padding:8px 14px;box-shadow:var(--shadow);transition:all .2s;font-weight:500}
+#settingsBtn:hover{box-shadow:var(--shadow-hover);border-color:rgba(38,166,255,0.3)}
+#settingsPanel{display:none;flex-direction:column;background:var(--panel-bg);color:var(--fg);border-radius:8px;padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.08);font-size:.88rem;gap:12px;min-width:200px;margin-bottom:8px;border:1px solid var(--border)}
+.settingItem{display:flex;justify-content:space-between;align-items:center;font-weight:400}
+#volumeControl{width:92px}
+
+/* --- SWITCH - MINIMALIST --- */
+.switch{position:relative;display:inline-block;width:44px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.1);border-radius:24px;transition:.3s;border:1px solid var(--border)}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+input:checked + .slider{background:var(--accent);border-color:var(--accent)}
+input:checked + .slider:before{transform:translateX(20px)}
+
+/* --- DARK MODE --- */
+body.dark-mode{background:#0a0a0a;color:#e8e8e8;--bg:#0a0a0a;--fg:#e8e8e8;--panel-bg:#111;--border:rgba(255,255,255,.08);--shadow:0 2px 8px rgba(0,0,0,.3);--shadow-hover:0 4px 16px rgba(0,0,0,.5)}
+body.dark-mode #videoBuffered{background:#333}
+body.dark-mode #videoProgress{background:var(--accent)}
+body.dark-mode .slider{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.1)}
+body.dark-mode .slider:before{background:#e8e8e8}
+body.dark-mode .tabContent p{opacity:.75}
+body.dark-mode th{color:#e8e8e8}
+body.dark-mode .tabContent::-webkit-scrollbar-thumb{background-color:rgba(255,255,255,.2)}
+
+/* --- QR MODAL - MINIMALIST --- */
+#qrModalOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.3);backdrop-filter:blur(4px);z-index:70;opacity:0;transition:opacity .2s}
+#qrModal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.96);background:var(--panel-bg);color:var(--fg);padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:71;text-align:center;width:320px;opacity:0;transition:opacity .2s,transform .2s,background .3s,color .3s;border:1px solid var(--border)}
+#qrModal.open{display:block;opacity:1;transform:translate(-50%,-50%) scale(1)}
+#qrModalOverlay.open{display:block;opacity:1}
+#qrModal h2{font-size:1.1rem;margin:0 0 8px;font-weight:500;color:var(--fg)}
+#qrModal p{margin:0 0 20px;font-size:.92rem;color:var(--fg);opacity:.85;font-weight:300}
+.modalBtn{padding:10px 18px;border:0;border-radius:8px;font-weight:500;cursor:pointer;transition:transform .2s,background .3s,color .3s;font-size:.9rem}
+.modalBtn:hover{transform:translateY(-1px)}
+.modalProceed{background:var(--accent);color:#fff}
+.modalCancel{background:transparent;color:var(--fg);border:1px solid var(--border)}
+
+/* Dark mode QR modal */
+body.dark-mode #qrModal{background:#111;color:#e8e8e8}
+body.dark-mode #qrModal h2, body.dark-mode #qrModal p{color:#e8e8e8}
+body.dark-mode #qrModalOverlay{background:rgba(0,0,0,.6)}
+body.dark-mode .modalCancel{background:transparent;border:1px solid rgba(255,255,255,.15);color:#e8e8e8}
+
+/* --- FOOTER --- */
+#buildNo{position:fixed;top:12px;left:12px;font-size:.8rem;color:rgba(0,0,0,.3);z-index:30;font-weight:400}
+#copyright{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);font-size:.8rem;color:rgba(0,0,0,.3);z-index:30;font-weight:400}
+body.dark-mode #buildNo, body.dark-mode #copyright{color:rgba(255,255,255,.25)}
+
+/* responsive tweaks */
+@media (max-width:520px){
+  #settingsPanel{min-width:170px;padding:12px}
+  #buildNo{font-size:.75rem;top:8px;left:8px}
+  #copyright{font-size:.75rem;bottom:8px}
+}
+</style>
+</head>
+<body>
+
+<!-- LANDING TEXT -->
+<div class="welcome" id="welcome"></div>
+
+<!-- FULL WIDTH BAR WITH PROGRESS INSIDE -->
+<div class="bar" id="startBar" aria-hidden="true">
+  <div id="progress" aria-hidden="true"></div>
+</div>
+
+<!-- QR TIP (landing) -->
+<div id="qrTip" class="qr-box" role="button" aria-label="Scan QR code or click to open website" tabindex="0" title="Scan / Click to open site">
+  <div class="qrInner">
+    <div class="qrCanvas" id="qrCanvas" aria-hidden="true"></div>
+    <div class="qrLabel" id="qrLabel">QR Code</div>
+  </div>
+</div>
+
+<!-- VIDEO -->
+<div id="videoContainer">
+    <video id="videoPlayer" loop playsinline preload="metadata" poster="" tabindex="0" aria-label="Background video">
+        <source id="videoSource" src="" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="grid-overlay" aria-hidden="true"></div>
+    <div id="videoBuffered" aria-hidden="true"></div>
+    <div id="videoProgress" aria-hidden="true"></div>
+
+    <!-- small info box -->
+    <div id="qrBtn" class="qr-box disabled" title="Open info" role="button" tabindex="0" aria-label="Open info or QR">
+      <div class="qrInner">
+        <div class="qrSmallCanvas" id="qrSmallCanvas" aria-hidden="true"></div>
+        <div class="qrSmallLabel" id="qrSmallLabel">Info</div>
+      </div>
+    </div>
+</div>
+
+<!-- INFO PANEL -->
+<div id="infoOverlayLarge" role="dialog" aria-modal="true" aria-hidden="true">
+    <button id="closeInfoOverlay" aria-label="Close info"></button>
+    
+    <!-- Mobile Menu Toggle -->
+    <button id="mobileMenuToggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+
+    <!-- Vertical Tabs -->
+    <div id="infoVerticalTabs" role="tablist" aria-orientation="vertical"></div>
+
+    <!-- Content Area -->
+    <div id="infoContent"></div>
+</div>
+
+<!-- QR Modal -->
+<div id="qrModalOverlay" aria-hidden="true"></div>
+<div id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle" aria-describedby="qrModalDesc">
+    <h2 id="qrModalTitle">Visit Website</h2>
+    <p id="qrModalDesc">You clicked the QR code!<br>Would you like to visit our main business site?</p>
+    <div style="display:flex;justify-content:center;gap:12px">
+        <button id="qrProceedBtn" class="modalBtn modalProceed" type="button">Proceed</button>
+        <button id="qrCancelBtn" class="modalBtn modalCancel" type="button">Cancel</button>
+    </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settingsWrapper">
+    <div id="settingsPanel" aria-hidden="true">
+        <div class="settingItem"><label for="visualModeToggle">Visual Mode</label><label class="switch"><input type="checkbox" id="visualModeToggle" aria-label="Toggle dark mode"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="fullscreenModeToggle">Fullscreen</label><label class="switch"><input type="checkbox" id="fullscreenModeToggle" aria-label="Toggle fullscreen"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="pauseVideoToggle">Pause Video</label><label class="switch"><input type="checkbox" id="pauseVideoToggle" aria-label="Pause or play video"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="muteAudioToggle">Mute Audio</label><label class="switch"><input type="checkbox" id="muteAudioToggle" aria-label="Mute or unmute audio"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="volumeControl">Volume</label><input id="volumeControl" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Adjust volume"></div>
+        <div class="settingItem"><label for="hideUIToggle">Hide UI</label><label class="switch"><input type="checkbox" id="hideUIToggle" aria-label="Hide user interface"><span class="slider" aria-hidden="true"></span></label></div>
+        <div class="settingItem"><label for="qrToggle">QR Code</label><label class="switch"><input type="checkbox" id="qrToggle"><span class="slider"></span></label></div>
+        <div class="settingItem"><label for="refreshPageToggle">Reset Landing</label><label class="switch"><input type="checkbox" id="refreshPageToggle" aria-label="Reset to landing page"><span class="slider" aria-hidden="true"></span></label></div>
+    </div>
+
+    <button id="settingsBtn" aria-expanded="false" aria-controls="settingsPanel" title="Settings">Settings</button>
+</div>
+
+<!-- FOOTER -->
+<div id="buildNo">Build No. 0.2.1</div>
+<div id="copyright">© 2026 · All rights reserved</div>
+
+<!-- Config -->
+<script src="config.js"></script>
+<!-- QR library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+// ----------------- ELEMENTS -----------------
+const startBar = document.getElementById('startBar');
+const videoContainer = document.getElementById('videoContainer');
+const video = document.getElementById('videoPlayer');
+const videoSource = document.getElementById('videoSource');
+const videoProgress = document.getElementById('videoProgress');
+const videoBuffered = document.getElementById('videoBuffered');
+const qrBtn = document.getElementById('qrBtn');
+const qrTip = document.getElementById('qrTip');
+const qrCanvas = document.getElementById('qrCanvas');
+const qrLabel = document.getElementById('qrLabel');
+const qrSmallCanvas = document.getElementById('qrSmallCanvas');
+const qrSmallLabel = document.getElementById('qrSmallLabel');
+const infoOverlayLarge = document.getElementById('infoOverlayLarge');
+const closeInfoOverlay = document.getElementById('closeInfoOverlay');
+const infoVerticalTabs = document.getElementById('infoVerticalTabs');
+const infoContent = document.getElementById('infoContent');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const visualModeToggle = document.getElementById('visualModeToggle');
+const fullscreenModeToggle = document.getElementById('fullscreenModeToggle');
+const pauseVideoToggle = document.getElementById('pauseVideoToggle');
+const muteAudioToggle = document.getElementById('muteAudioToggle');
+const volumeControl = document.getElementById('volumeControl');
+const refreshPageToggle = document.getElementById('refreshPageToggle');
+const hideUIToggle = document.getElementById('hideUIToggle');
+const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+const qrModal = document.getElementById('qrModal');
+const qrModalOverlay = document.getElementById('qrModalOverlay');
+const qrProceedBtn = document.getElementById('qrProceedBtn');
+const qrCancelBtn = document.getElementById('qrCancelBtn');
+const qrToggle = document.getElementById('qrToggle');
+const progressEl = document.getElementById('progress');
+const buildNo = document.getElementById('buildNo');
+const copyrightEl = document.getElementById('copyright');
+
+// --- CONFIG LOADING ---
+const DEFAULT_CONFIG = {
+  landing: { propertyName: 'Property Name', brand: 'theVideopage', brandSuffix: 'TM' },
+  video: { src: '', poster: '' },
+  qr: { url: '' },
+  infoButtonLabel: 'Info',
+  buildNumber: '',
+  copyright: '',
+  tabs: []
+};
+const CONFIG = Object.assign({}, DEFAULT_CONFIG, window.SITE_CONFIG || {});
+
+// set default volume
+video.volume = 0.5;
+volumeControl.value = 0.5;
+
+const originalQrLabel = qrLabel.textContent || 'QR Code';
+
+// init landing and dynamic content
+function renderLanding(){
+  const brandPart = CONFIG.landing.brand ? `${CONFIG.landing.brand}<sup>${CONFIG.landing.brandSuffix || ''}</sup>` : '';
+  document.getElementById('welcome').innerHTML = `Welcome to <span style="color:var(--accent);font-weight:500">${brandPart}</span> of "<span class="no-break">${CONFIG.landing.propertyName}</span>"`;
+}
+
+function renderVideo(){
+  if(CONFIG.video.poster) video.setAttribute('poster', CONFIG.video.poster);
+  if(CONFIG.video.src){
+    videoSource.src = CONFIG.video.src;
+    video.load();
+  }
+}
+
+function renderFooter(){
+  if(CONFIG.buildNumber) buildNo.textContent = `Build No. ${CONFIG.buildNumber}`;
+  if(CONFIG.copyright) copyrightEl.textContent = CONFIG.copyright;
+}
+
+function renderTabs(){
+  infoVerticalTabs.innerHTML = '';
+  infoContent.innerHTML = '';
+  CONFIG.tabs.forEach((tab, index)=>{
+    const btn = document.createElement('button');
+    btn.className = 'tabBtn' + (index === 0 ? ' active' : '');
+    btn.dataset.tab = tab.id;
+    btn.role = 'tab';
+    btn.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+    btn.textContent = tab.label;
+    infoVerticalTabs.appendChild(btn);
+
+    const panel = document.createElement('div');
+    panel.className = 'tabContent' + (index === 0 ? ' active' : '');
+    panel.id = tab.id;
+    panel.role = 'tabpanel';
+    if(index !== 0) panel.style.display = 'none';
+    panel.innerHTML = tab.contentHtml || '';
+    infoContent.appendChild(panel);
+  });
+  attachTabHandlers();
+}
+
+function applyDynamicContent(){
+  renderLanding();
+  renderVideo();
+  renderFooter();
+  renderTabs();
+  qrSmallLabel.textContent = CONFIG.infoButtonLabel || 'Info';
+}
+
+applyDynamicContent();
+
+// ----------------- QR GENERATION -----------------
+function generateQrInto(el){
+  if(!el) return;
+  el.innerHTML = '';
+  try {
+    if(typeof QRCode !== 'undefined') {
+      new QRCode(el, { text: CONFIG.qr.url || '', width: el.clientWidth || 85, height: el.clientHeight || 85 });
+    } else {
+      el.innerHTML = '<div style="font-size:0.7rem;text-align:center;padding:10px">QR<br>Code</div>';
+    }
+  } catch(e) {
+    console.error('QR Code generation failed:', e);
+    el.innerHTML = '<div style="font-size:0.7rem;text-align:center;padding:10px">QR<br>Code</div>';
+  }
+}
+
+generateQrInto(qrCanvas);
+generateQrInto(qrSmallCanvas);
+
+// ----------------- LANDING PROGRESS ANIMATION -----------------
+let landingI = 0;
+const landingT = 50;
+let landingInterval = null;
+
+function renderLandingProgress(){
+  progressEl.textContent = '-' + ' '.repeat(Math.max(0, landingT - landingI)) + '—'.repeat(Math.max(0, landingI)) + '-';
+}
+
+function startLandingProgress(){
+  if(videoContainer.style.display === 'block') return;
+  progressEl.style.display = 'block';
+  landingI = 0;
+  renderLandingProgress();
+  landingInterval = setInterval(()=>{
+    if(landingI < landingT){
+      landingI++;
+      renderLandingProgress();
+    } else {
+      clearInterval(landingInterval);
+      landingInterval = null;
+    }
+  }, 60);
+}
+
+function stopLandingProgress(){
+  if(landingInterval){
+    clearInterval(landingInterval);
+    landingInterval = null;
+  }
+  progressEl.style.display = 'none';
+}
+
+// ----------------- HELPERS -----------------
+function startExperience(){
+  if(videoContainer.style.display !== 'block'){
+    stopLandingProgress();
+    videoContainer.style.display = 'block';
+    video.play().catch(()=>{});
+    document.getElementById('welcome').style.display = 'none';
+    startBar.style.display = 'none';
+    qrTip.style.display = 'none';
+    qrBtn.classList.remove('disabled');
+    updateQrBtnState();
+  }
+}
+
+function openInfoPanel(){
+  infoOverlayLarge.style.display = 'flex';
+  setTimeout(()=> infoOverlayLarge.classList.add('open'), 10);
+  if(!document.body.classList.contains('hide-ui')) document.body.classList.add('info-open');
+  infoOverlayLarge.setAttribute('aria-hidden', 'false');
+  updateQrBtnState();
+}
+
+function closeInfoPanel(){
+  infoOverlayLarge.classList.remove('open');
+  infoVerticalTabs.classList.remove('mobile-open');
+  mobileMenuToggle.classList.remove('open');
+  mobileMenuToggle.setAttribute('aria-expanded', 'false');
+  setTimeout(()=>{ 
+    infoOverlayLarge.style.display='none'; 
+    document.body.classList.remove('info-open'); 
+    infoOverlayLarge.setAttribute('aria-hidden','true'); 
+    updateQrBtnState();
+  }, 360);
+}
+
+function openQrModal(){
+  qrModal.classList.add('open'); 
+  qrModalOverlay.classList.add('open');
+  qrModal.style.display='block'; 
+  qrModalOverlay.style.display='block';
+  qrProceedBtn.focus();
+}
+
+function closeQrModal(){ 
+  qrModal.classList.remove('open'); 
+  qrModalOverlay.classList.remove('open'); 
+  setTimeout(()=>{ 
+    qrModal.style.display='none'; 
+    qrModalOverlay.style.display='none'; 
+  },180); 
+}
+
+function closeQrModalImmediate(){ 
+  qrModal.classList.remove('open'); 
+  qrModalOverlay.classList.remove('open'); 
+  qrModal.style.display='none'; 
+  qrModalOverlay.style.display='none'; 
+}
+
+function updateQrBtnState(){
+  const videoVisible = videoContainer.style.display === 'block';
+  const qrEnabled = qrToggle.checked;
+  const uiHidden = hideUIToggle.checked;
+
+  if(uiHidden){
+    qrBtn.style.display = 'none';
+    return;
+  } else {
+    qrBtn.style.display = videoVisible ? 'flex' : 'flex';
+  }
+
+  if(videoVisible && qrEnabled){
+    qrSmallCanvas.style.display = 'flex';
+    qrSmallLabel.style.display = 'none';
+    generateQrInto(qrSmallCanvas);
+    qrBtn.setAttribute('aria-label','Scan QR code');
+    qrBtn.title = 'Scan QR code';
+  } else {
+    qrSmallCanvas.style.display = 'none';
+    qrSmallLabel.style.display = 'block';
+    qrSmallLabel.textContent = CONFIG.infoButtonLabel || 'Info';
+    qrBtn.setAttribute('aria-label','Open info');
+    qrBtn.title = 'Open info';
+  }
+}
+
+// ----------------- MOBILE MENU TOGGLE -----------------
+mobileMenuToggle.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const isOpen = infoVerticalTabs.classList.contains('mobile-open');
+  if(isOpen){
+    infoVerticalTabs.classList.remove('mobile-open');
+    mobileMenuToggle.classList.remove('open');
+    mobileMenuToggle.setAttribute('aria-expanded','false');
+  } else {
+    infoVerticalTabs.classList.add('mobile-open');
+    mobileMenuToggle.classList.add('open');
+    mobileMenuToggle.setAttribute('aria-expanded','true');
+  }
+});
+
+document.addEventListener('click', (e)=>{
+  if(window.innerWidth <= 768){
+    if(!infoVerticalTabs.contains(e.target) && 
+       !mobileMenuToggle.contains(e.target) &&
+       infoVerticalTabs.classList.contains('mobile-open')){
+      infoVerticalTabs.classList.remove('mobile-open');
+      mobileMenuToggle.classList.remove('open');
+      mobileMenuToggle.setAttribute('aria-expanded', 'false');
+    }
+  }
+});
+
+function attachTabHandlers(){
+  const infoTabs = infoVerticalTabs.querySelectorAll('.tabBtn');
+  const tabContents = infoContent.querySelectorAll('.tabContent');
+  infoTabs.forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      infoTabs.forEach(t=>{ t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+      tabContents.forEach(c=>{ c.classList.remove('active'); c.style.display='none'; });
+      tab.classList.add('active'); 
+      tab.setAttribute('aria-selected','true');
+      const target = document.getElementById(tab.dataset.tab);
+      target.style.display='block'; 
+      void target.offsetWidth; 
+      target.classList.add('active');
+      
+      if(window.innerWidth <= 768){
+        infoVerticalTabs.classList.remove('mobile-open');
+        mobileMenuToggle.classList.remove('open');
+        mobileMenuToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+}
+
+// ----------------- EVENTS -----------------
+startBar.addEventListener('click', startExperience);
+
+startBar.addEventListener('mouseenter', ()=>{ 
+  document.body.classList.add('invert');
+});
+startBar.addEventListener('mouseleave', ()=>{ 
+  document.body.classList.remove('invert');
+});
+
+qrTip.addEventListener('click', ()=>{
+  if(qrToggle.checked){
+    if(hideUIToggle.checked) return;
+    openQrModal();
+  } else {
+    startExperience();
+  }
+});
+
+qrTip.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' || e.key === ' '){
+    e.preventDefault();
+    if(qrToggle.checked){
+      if(hideUIToggle.checked) return;
+      openQrModal();
+    } else {
+      startExperience();
+    }
+  }
+});
+
+qrBtn.addEventListener('click', ()=>{
+  if(qrBtn.classList.contains('disabled')) return;
+  if(videoContainer.style.display === 'block' && qrToggle.checked){
+    if(hideUIToggle.checked) return;
+    openQrModal();
+  } else {
+    closeQrModalImmediate();
+    openInfoPanel();
+  }
+});
+
+qrBtn.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' || e.key === ' '){
+    e.preventDefault();
+    qrBtn.click();
+  }
+});
+
+qrCancelBtn.addEventListener('click', closeQrModal);
+qrModalOverlay.addEventListener('click', closeQrModal);
+qrProceedBtn.addEventListener('click', ()=>{ 
+  if(CONFIG.qr.url) window.open(CONFIG.qr.url,'_blank','noopener,noreferrer'); 
+  closeQrModal(); 
+});
+
+closeInfoOverlay.addEventListener('click', closeInfoPanel);
+
+settingsBtn.addEventListener('click', ()=>{
+  const isOpen = settingsPanel.style.display === 'flex';
+  settingsPanel.style.display = isOpen ? 'none' : 'flex';
+  settingsBtn.setAttribute('aria-expanded', String(!isOpen));
+});
+
+document.addEventListener('click', (e)=>{
+  if(!settingsPanel.contains(e.target) && !settingsBtn.contains(e.target)){
+    if(settingsPanel.style.display === 'flex'){
+      settingsPanel.style.display = 'none';
+      settingsBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+});
+
+visualModeToggle.addEventListener('change', ()=> document.body.classList.toggle('dark-mode'));
+
+fullscreenModeToggle.addEventListener('change', ()=>{
+  if(fullscreenModeToggle.checked){ 
+    const elem = document.documentElement;
+    if(elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
+    else if(elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(()=>{});
+    else if(elem.mozRequestFullScreen) elem.mozRequestFullScreen().catch(()=>{});
+    else if(elem.msRequestFullscreen) elem.msRequestFullscreen().catch(()=>{});
+  } else { 
+    if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+    else if(document.webkitExitFullscreen) document.webkitExitFullscreen().catch(()=>{});
+    else if(document.mozCancelFullScreen) document.mozCancelFullScreen().catch(()=>{});
+    else if(document.msExitFullscreen) document.msExitFullscreen().catch(()=>{});
+  }
+});
+
+pauseVideoToggle.addEventListener('change', ()=>{ 
+  if(pauseVideoToggle.checked) video.pause(); 
+  else video.play().catch(()=>{}); 
+});
+
+muteAudioToggle.addEventListener('change', ()=> video.muted = muteAudioToggle.checked );
+
+volumeControl.addEventListener('input', ()=> video.volume = volumeControl.value );
+
+video.addEventListener('timeupdate', ()=>{ 
+  if(video.duration) videoProgress.style.width = (video.currentTime / video.duration * 100) + '%'; 
+});
+
+video.addEventListener('progress', ()=>{
+  if(video.buffered.length){ 
+    const bufferedEnd = video.buffered.end(video.buffered.length - 1); 
+    const duration = video.duration || 1; 
+    if(duration>0) videoBuffered.style.width = (bufferedEnd / duration * 100) + '%'; 
+  }
+});
+
+video.addEventListener('play', ()=>{ updateQrBtnState(); qrBtn.classList.remove('disabled'); });
+video.addEventListener('pause', ()=>{ updateQrBtnState(); });
+
+refreshPageToggle.addEventListener('change', ()=>{ 
+  if(refreshPageToggle.checked) location.reload(); 
+});
+
+hideUIToggle.addEventListener('change', ()=>{
+  if(hideUIToggle.checked){
+    document.body.classList.add('hide-ui');
+    qrTip.style.display='none'; 
+    qrBtn.style.display='none'; 
+    qrBtn.classList.add('disabled');
+    closeQrModalImmediate(); 
+    closeInfoPanel();
+    if(videoContainer.style.display !== 'block') startBar.style.display = 'block';
+  } else {
+    document.body.classList.remove('hide-ui');
+    if(videoContainer.style.display !== 'block'){
+      startBar.style.display = 'block';
+      qrTip.style.display = 'flex';
+      qrBtn.classList.add('disabled');
+    } else {
+      qrBtn.style.display='flex'; 
+      qrBtn.classList.remove('disabled');
+      if(infoOverlayLarge.style.display==='flex'){ 
+        infoOverlayLarge.classList.add('open'); 
+        document.body.classList.add('info-open'); 
+      }
+    }
+    updateQrBtnState();
+  }
+});
+
+qrToggle.addEventListener('change', ()=>{
+  if(qrToggle.checked){
+    generateQrInto(qrCanvas);
+    qrCanvas.style.display = 'flex';
+    qrLabel.textContent = originalQrLabel;
+    qrLabel.style.opacity = '0';
+    qrTip.classList.remove('play-style');
+    qrTip.setAttribute('aria-label','Scan QR code or click to open website');
+  } else {
+    qrCanvas.style.display = 'none';
+    qrLabel.textContent = 'Play';
+    qrLabel.style.opacity = '1';
+    qrTip.classList.add('play-style');
+    qrTip.setAttribute('aria-label','Play video');
+    closeQrModalImmediate();
+  }
+  updateQrBtnState();
+});
+
+(function initQrState(){
+  if(qrToggle.checked){
+    generateQrInto(qrCanvas);
+    qrCanvas.style.display = 'flex';
+    qrLabel.textContent = originalQrLabel;
+    qrLabel.style.opacity = '0';
+    qrTip.classList.remove('play-style');
+    qrTip.setAttribute('aria-label','Scan QR code or click to open website');
+  } else {
+    qrCanvas.style.display = 'none';
+    qrLabel.textContent = 'Play';
+    qrLabel.style.opacity = '1';
+    qrTip.classList.add('play-style');
+    qrTip.setAttribute('aria-label','Play video');
+  }
+  updateQrBtnState();
+  if(hideUIToggle.checked){
+    qrTip.style.display = 'none';
+    qrBtn.style.display = 'none';
+  }
+})();
+
+window.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    if(qrModal.style.display === 'block'){ closeQrModal(); }
+    else if(infoOverlayLarge.style.display === 'flex'){ closeInfoPanel(); }
+  }
+});
+
+function togglePlayPause(){ 
+  if(video.paused){ 
+    video.play().catch(()=>{}); 
+    pauseVideoToggle.checked = false; 
+  } else { 
+    video.pause(); 
+    pauseVideoToggle.checked = true; 
+  } 
+}
+
+video.addEventListener('pointerup', ()=>{ 
+  if(videoContainer.style.display === 'block') togglePlayPause(); 
+});
+
+video.addEventListener('error', (e)=>{
+  console.error('Video failed to load:', e);
+  alert('Video failed to load. Please refresh the page or check your connection.');
+});
+
+startLandingProgress();
+
+}); // End of DOMContentLoaded
+</script>
+</body>
+</html>
